@@ -135,31 +135,26 @@ class GeminiExplainer:
     
     def _create_explanation_prompt(self, metadata_json: Dict[str, Any]) -> str:
         """
-        Create prompt for Gemini that asks for extremely concise Markdown.
+        Create prompt for Gemini that matches the 'Stack of Cards' UI reference.
         """
         metadata_str = json.dumps(metadata_json, indent=2)
+        risk_level = metadata_json.get('risk_score', {}).get('risk_level', 'UNKNOWN')
         
         prompt = f"""You are a code analysis expert. Analyze this function metadata.
-You will receive ONLY metadata - NO raw source code.
-
 Function Metadata:
 {metadata_str}
 
-Please provide a **Brief, High-Level Summary** in Markdown.
-**Constraint:** Be extremely concise. No fluff. No long paragraphs. Use short bullet points.
+Provide a response with exactly 3 sections. 
+Use concise, plain English. No markdown code blocks.
 
-Structure exactly like this:
+Section 1 Header: ### Why this exists
+Content: 1 sentence explaining the business purpose.
 
-### 🎯 Goal
-* (1 short sentence on what the function does)
+Section 2 Header: ### What breaks if changed?
+Content: 2-3 short bullet points on dependencies or impact.
 
-### ⚠️ Risk
-* **Level:** {metadata_json.get('risk_score', {}).get('risk_level', 'UNKNOWN')}
-* **Reason:** (1 short sentence explaining why)
-
-### 🔗 Context
-* **Input:** (List key parameters briefly)
-* **External:** (List key API calls or dependencies, if any)
+Section 3 Header: ### Risk Level: {risk_level}
+Content: 1 short sentence explaining the primary risk factor.
 
 """
         return prompt
