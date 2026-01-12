@@ -133,4 +133,77 @@ class CodeAnalyzerVisitor(ast.NodeVisitor):
             self._check_local_dependency(module_name)
         
         self.generic_visit(node)
+        
+    def visit_ImportFrom(self, node: ast.ImportFrom):
+        """Extracts from-import statements (e.g., 'from os import path')."""
+        module_name = node.module if node.module else ""
+        imports_list = []
+        
+        for alias in node.names:
+            import_item = {
+                "name": alias.name,
+                "alias": alias.asname if alias.asname else None
+            }
+            imports_list.append(import_item)
+        
+        import_info = {
+            "type": "from_import",
+            "module": module_name,
+            "imports": imports_list
+        }
+        self.imports.append(import_info)
+        # Check if this might be a local file dependency
+        if module_name:
+            self._check_local_dependency(module_name)
+        
+        self.generic_visit(node)
     
+    def _check_local_dependency(self, module_name: str):
+        """
+        Determines if an import is a local file dependency.
+        Simple heuristic: if a .py file with that name exists in the directory,
+        it's considered a local dependency.
+        """
+        # Skip standard library and common packages (simple heuristic)
+        if '.' in module_name or module_name.startswith('_'):
+            # Could be a local module with dots, check if file exists
+            module_path = self.file_dir / f"{module_name.replace('.', '/')}.py"
+            if module_path.exists():
+                self.file_dependencies.add(str(module_path))
+        else:
+            # Check if it's a local file in the same directory
+            local_file = self.file_dir / f"{module_name}.py"
+            if local_file.exists():
+                self.file_dependencies.add(str(local_file))
+            # Also check parent directory (common pattern)
+            parent_file = self.file_dir.parent / f"{module_name}.py"
+            if parent_file.exists():
+                self.file_dependencies.add(str(parent_file))
+    
+    def visit_FunctionDef(self, node: ast.FunctionDef):
+        """Extracts function definitions including name, parameters, and calls."""
+        # Extract parameters
+        params = []
+        for arg in node.args.args:
+            param_info = {
+                "name": arg.arg,
+                "annotation": ast.unparse(arg.annotation) if arg.annotation else None
+            }
+            params.append(param_info)
+        
+        # Extract function calls within this function
+        call_collector = FunctionCallCollector()
+        call_collector.visit(node)
+        
+        function_info = {
+            "name": node.name,
+            "parameters": params,
+            "parameter_count": len(params),
+            "line_number": node.lineno,
+            "function_calls": call_collector.calls,
+            "is_async": isinstance(node, ast.AsyncFunctionDef),
+            "decorators": [ast.unparse(dec) for dec in node.decorator_list] if node.decorator_list else []
+        }
+        
+        self.functions.append(function_info)
+        self.generic_visit(node)
