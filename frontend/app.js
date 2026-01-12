@@ -98,3 +98,45 @@ function renderResults(data) {
     functionsList.appendChild(div);
   });
 }
+
+// --- Explain Logic ---
+// We attach this to window so the HTML onclick="" can find it easily
+window.getExplanation = async function (funcName, btnElement) {
+  const outputBox = document.getElementById(`explain-${funcName}`);
+
+  // UI Loading State
+  btnElement.disabled = true;
+  btnElement.innerHTML = `<span class="loading"></span> Explaining...`;
+
+  const formData = new FormData();
+  formData.append("file", currentFile); // Resend the file for context
+
+  try {
+    // Call your Backend Explain Endpoint
+    const response = await fetch(
+      `http://localhost:8000/explain?function_name=${funcName}`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await response.json();
+
+    // Show Explanation
+    outputBox.style.display = "block";
+    // Simple formatting for newlines
+    outputBox.innerHTML = `<strong>Gemini says:</strong><br><br>${data.explanation.replace(
+      /\n/g,
+      "<br>"
+    )}`;
+
+    // Reset Button
+    btnElement.innerHTML = "Explain Again";
+    btnElement.disabled = false;
+  } catch (error) {
+    btnElement.innerHTML = "Error - Try Again";
+    btnElement.disabled = false;
+    alert("Failed to get explanation: " + error.message);
+  }
+};
