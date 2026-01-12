@@ -133,3 +133,105 @@ class GeminiExplainer:
         
         return clean_metadata
     
+    def _create_explanation_prompt(self, metadata_json: Dict[str, Any]) -> str:
+        """
+        Create prompt for Gemini that asks for explanation only.
+        Explicitly prohibits code generation or refactoring suggestions.
+        
+        Args:
+            metadata_json: Structured metadata dictionary
+            
+        Returns:
+            Formatted prompt string
+        """
+        # Convert metadata to JSON string for the prompt
+        metadata_str = json.dumps(metadata_json, indent=2)
+        
+        prompt = f"""You are analyzing a Python function based on its structured metadata. 
+You will receive ONLY metadata (function name, parameters, calls, risk score) - NO raw source code.
+
+Function Metadata:
+{metadata_str}
+
+Please provide a clear, concise explanation in plain text that addresses:
+
+1. **Why this function exists**: What is its purpose and role in the codebase?
+   - Based on the function name, parameters, and what it calls
+   - Consider the imports and dependencies as context
+
+2. **What might break if changed**: What are the potential impacts of modifying this function?
+   - Consider the risk level and why it was assigned
+   - Think about what other code might depend on this function
+   - Consider the function calls it makes and parameters it accepts
+
+3. **Why the risk level is assigned**: Explain the risk assessment reasoning
+   - Risk level: {metadata_json.get('risk_score', {}).get('risk_level', 'UNKNOWN')}
+   - Risk reason: {metadata_json.get('risk_score', {}).get('risk_reason', 'Not provided')}
+   - Explain what factors contribute to this risk level
+
+IMPORTANT CONSTRAINTS:
+- Provide explanation ONLY - do NOT generate code
+- Do NOT suggest refactoring or code changes
+- Do NOT provide code examples
+- Focus on understanding and explanation
+- Write in clear, natural language
+
+Your explanation:"""
+        
+        return prompt
+
+
+def explain_with_gemini(function_metadata: Dict[str, Any],
+                       api_key: Optional[str] = None,
+                       file_context: Dict[str, Any] = None) -> str:
+    """
+    Convenience function to get explanation for a function.
+    
+    Args:
+        function_metadata: Function metadata dictionary
+        api_key: Optional Gemini API key (uses env var if not provided)
+        file_context: Optional file-level context
+        
+    Returns:
+        Plain text explanation
+    """
+    explainer = GeminiExplainer(api_key=api_key)
+    return explainer.explain_function(function_metadata, file_context)
+
+
+if __name__ == "__main__":
+    # Example usage
+    import sys
+    
+    if len(sys.argv) < 2:
+        print("Usage: python gemini_explainer.py <api_key>")
+        print("Or set GEMINI_API_KEY environment variable")
+        sys.exit(1)
+    
+    api_key = sys.argv[1] if len(sys.argv) > 1 else None
+    
+    # Example function metadata
+    example_metadata = {
+        "name": "process_data",
+        "parameters": [{"name": "data", "annotation": "List[str]"}],
+        "parameter_count": 1,
+        "line_number": 14,
+        "function_calls": ["get"],
+        "api_calls": [],
+        "is_async": False,
+        "decorators": [],
+        "risk_score": {
+            "risk_level": "MEDIUM",
+            "risk_reason": "Core logic function, used once, no external API calls"
+        }
+    }
+    
+    try:
+        explainer = GeminiExplainer(api_key=api_key)
+        explanation = explainer.explain_function(example_metadata)
+        print("\n" + "=" * 60)
+        print("Gemini Explanation:")
+        print("=" * 60)
+        print(explanation)
+    except Exception as e:
+        print(f"Error: {e}")
