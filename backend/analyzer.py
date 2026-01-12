@@ -15,10 +15,18 @@ class PythonStaticAnalyzer:
     Extracts imports, functions, parameters, calls, and dependencies.
     """
     
-    def __init__(self):
+    def __init__(self, function_usage_map: Dict[str, int] = None):
+        """
+        Initialize analyzer.
+        
+        Args:
+            function_usage_map: Optional dictionary mapping function names to usage counts
+                              across files. Used for risk scoring multi-file usage.
+        """
         self.imports: List[Dict[str, Any]] = []
         self.functions: List[Dict[str, Any]] = []
         self.file_dependencies: Set[str] = set()
+        self.function_usage_map = function_usage_map or {}
     
     def analyze_file(self, file_path: str) -> Dict[str, Any]:
         """
@@ -59,6 +67,14 @@ class PythonStaticAnalyzer:
         visitor = CodeAnalyzerVisitor(self.imports, self.functions, self.file_dependencies, path.parent)
         visitor.visit(tree)
         
+        # Apply risk scoring to functions
+        risk_scorer = RiskScorer(self.function_usage_map)
+        for func_info in self.functions:
+            # Get API calls from function info (stored as list, convert to set)
+            api_calls_set = set(func_info.get('api_calls', []))
+            risk_score = risk_scorer.score_function(func_info, self.imports, api_calls_set)
+            func_info['risk_score'] = risk_score
+        
         # Build result structure
         result = {
             "file_path": str(path),
@@ -82,6 +98,64 @@ class PythonStaticAnalyzer:
         """
         result = self.analyze_file(file_path)
         return json.dumps(result, indent=indent)
+    
+    def build_function_usage_map(self, file_paths: List[str]) -> Dict[str, int]:
+        """
+        Analyzes multiple files and builds a map of function usage counts.
+        Used for risk scoring to detect functions used in multiple files.
+        
+        Args:
+            file_paths: List of Python file paths to analyze
+            
+        Returns:
+            Dictionary mapping function names to usage counts across files
+        """
+        function_usage: Dict[str, int] = {}
+        
+        for file_path in file_paths:
+            try:
+                path = Path(file_path)
+                if not path.exists() or not path.suffix == '.py':
+                    continue
+                
+                source_code = path.read_text(encoding='utf-8')
+                tree = ast.parse(source_code, filename=str(path))
+                
+                # Extract function definitions from this file
+                visitor = CodeAnalyzerVisitor([], [], set(), path.parent)
+                visitor.visit(tree)
+                
+                # Count function definitions (not calls, but definitions)
+                for func_info in visitor.functions:
+                    func_name = func_info['name']
+                    function_usage[func_name] = function_usage.get(func_name, 0) + 1
+                    
+            except (SyntaxError, FileNotFoundError, UnicodeDecodeError):
+                # Skip files with errors
+                continue
+        
+        return function_usage
+    
+    def analyze_file_with_context(self, file_path: str, 
+                                  project_files: List[str] = None) -> Dict[str, Any]:
+        """
+        Analyzes a file with context from other project files for accurate risk scoring.
+        
+        Args:
+            file_path: Path to the .py file to analyze
+            project_files: Optional list of all Python files in the project
+                          for building function usage map
+            
+        Returns:
+            Dictionary containing all extracted metadata with risk scores
+        """
+        # Build function usage map if project files provided
+        if project_files:
+            usage_map = self.build_function_usage_map(project_files)
+            # Re-initialize with usage map
+            self.function_usage_map = usage_map
+        
+        return self.analyze_file(file_path)
 
 
 class CodeAnalyzerVisitor(ast.NodeVisitor):
@@ -168,7 +242,7 @@ class CodeAnalyzerVisitor(ast.NodeVisitor):
             }
             params.append(param_info)
         
-        # Extract function calls within this function
+        # Extract function calls within this function (including API calls)
         call_collector = FunctionCallCollector()
         call_collector.visit(node)
         
@@ -178,61 +252,10 @@ class CodeAnalyzerVisitor(ast.NodeVisitor):
             "parameter_count": len(params),
             "line_number": node.lineno,
             "function_calls": call_collector.calls,
+            "api_calls": list(call_collector.api_calls),  # Store API calls for risk scoring
             "is_async": isinstance(node, ast.AsyncFunctionDef),
             "decorators": [ast.unparse(dec) for dec in node.decorator_list] if node.decorator_list else []
         }
         
         self.functions.append(function_info)
         self.generic_visit(node)
-
-
-class FunctionCallCollector(ast.NodeVisitor):
-    """
-    Helper visitor to collect function calls within a function body.
-    Extracts the names of functions being called.
-    """
-    
-    def __init__(self):
-        self.calls: List[str] = []
-    
-    def visit_Call(self, node: ast.Call):
-        """Extracts function call names."""
-        if isinstance(node.func, ast.Name):
-            # Direct function call: function_name()
-            self.calls.append(node.func.id)
-        elif isinstance(node.func, ast.Attribute):
-            # Method call: obj.method_name()
-            # We store just the method name for simplicity
-            self.calls.append(node.func.attr)
-        elif isinstance(node.func, ast.Call):
-            # Chained call: func()()
-            pass  # Skip complex chained calls for MVP
-        
-        self.generic_visit(node)
-
-
-def analyze_python_file(file_path: str) -> Dict[str, Any]:
-    """
-    Convenience function to analyze a Python file.
-    
-    Args:
-        file_path: Path to the .py file
-        
-    Returns:
-        Dictionary with analysis results
-    """
-    analyzer = PythonStaticAnalyzer()
-    return analyzer.analyze_file(file_path)
-
-
-if __name__ == "__main__":
-    # Example usage
-    import sys
-    
-    if len(sys.argv) > 1:
-        file_path = sys.argv[1]
-        analyzer = PythonStaticAnalyzer()
-        result = analyzer.analyze_file(file_path)
-        print(analyzer.analyze_file_to_json(file_path))
-    else:
-        print("Usage: python analyzer.py <path_to_python_file>")
