@@ -34,33 +34,35 @@ async def analyze_code(
     file: UploadFile = File(...)
 ):
     """
-    Endpoint to upload a Python file and get static analysis metadata.
+    Endpoint to upload a Python file and get static analysis metadata AND source code.
     """
-    # 1. Validate file type
     if not file.filename.endswith('.py'):
         raise HTTPException(status_code=400, detail="Only .py files are allowed")
 
-    # 2. Save uploaded file to a temporary directory
-    # We need to save it because your analyzer.py uses Path.read_text()
     temp_dir = tempfile.gettempdir()
     temp_path = os.path.join(temp_dir, file.filename)
     
     try:
+        # 1. Save file to disk
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        # 3. Run your existing Analyzer
+        # 2. Read the source code text (NEW STEP)
+        with open(temp_path, "r", encoding="utf-8") as f:
+            source_code = f.read()
+
+        # 3. Run Analysis
         analyzer = PythonStaticAnalyzer()
-        # Your analyzer returns a Dict with 'imports', 'functions', 'risk_scores'
         result = analyzer.analyze_file(temp_path)
         
-        # 4. Schedule cleanup (delete file after response is sent)
+        # 4. Attach source code to the result (NEW STEP)
+        result["source_code"] = source_code
+        
         background_tasks.add_task(cleanup_file, temp_path)
         
         return result
 
     except Exception as e:
-        # Ensure cleanup happens even if analysis fails
         if os.path.exists(temp_path):
             os.remove(temp_path)
         raise HTTPException(status_code=500, detail=str(e))
