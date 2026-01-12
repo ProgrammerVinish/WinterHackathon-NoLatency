@@ -43,3 +43,38 @@ h1 {
   margin-bottom: 10px;
   display: block;
 }
+
+/* Results Container */
+#results-area {
+  display: none;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.function-item {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 0;
+}
+.function-item:last-child {
+  border-bottom: none;
+}
+
+.func-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.func-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-family: monospace;
+  color: var(--primary);
+}
