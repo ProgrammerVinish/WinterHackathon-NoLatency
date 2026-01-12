@@ -428,24 +428,19 @@ class FunctionCallCollector(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call):
         """Extracts function call names and detects API calls."""
         if isinstance(node.func, ast.Name):
-            # Direct function call: function_name()
             self.calls.append(node.func.id)
         elif isinstance(node.func, ast.Attribute):
-            # Method call: obj.method_name()
-            # We store just the method name for simplicity
             self.calls.append(node.func.attr)
-            # Check if this is an API call (e.g., requests.get, urllib.request.urlopen)
             if isinstance(node.func.value, ast.Name):
-                # Track the module name for API detection
+                
                 self.api_calls.add(f"{node.func.value.id}.{node.func.attr}")
             elif isinstance(node.func.value, ast.Attribute):
-                # Handle nested attributes (e.g., urllib.request.urlopen)
                 attr_name = self._get_attribute_name(node.func.value)
                 if attr_name:
                     self.api_calls.add(f"{attr_name}.{node.func.attr}")
         elif isinstance(node.func, ast.Call):
-            # Chained call: func()()
-            pass  # Skip complex chained calls for MVP
+           
+            pass 
         
         self.generic_visit(node)
     
