@@ -17,4 +17,28 @@
 
     <script src="app.js" defer></script>
   </head>
+   <body>
+    <header class="top-bar">
+      <div class="logo">
+        <span class="logo-icon">EX</span>
+        <div class="logo-text">
+          <h1>ExplainIt</h1>
+          <p>Read-only Code Risk Insights</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="upload-btn" class="btn-primary">
+          <span class="icon">⬆</span> Upload File
+        </button>
+        <input type="file" id="file-input" accept=".py" hidden />
+      </div>
+    </header>
+
+    <div class="dashboard-grid">
+      <aside class="sidebar-left card">
+        <div class="panel-header">FILES</div>
+        <div id="file-tree" class="file-tree">
+          <div class="empty-state-small">No file loaded</div>
+        </div>
+      </aside>
   
