@@ -259,3 +259,228 @@ class CodeAnalyzerVisitor(ast.NodeVisitor):
         
         self.functions.append(function_info)
         self.generic_visit(node)
+class RiskScorer:
+    """
+    Rule-based risk scoring system for functions.
+    Assigns risk levels based on deterministic rules.
+    """
+    
+    # Known external API libraries/modules
+    API_MODULES = {
+        'requests', 'http', 'urllib', 'urllib2', 'httplib', 'aiohttp',
+        'httpx', 'urllib3', 'http.client', 'http.server', 'urllib.request',
+        'urllib.parse', 'urllib.error'
+    }
+    
+    # Common API-related function names
+    API_FUNCTION_NAMES = {
+        'get', 'post', 'put', 'delete', 'patch', 'request', 'urlopen',
+        'urlretrieve', 'urlencode', 'send', 'fetch'
+    }
+    
+    # Helper/utility function name patterns
+    HELPER_PATTERNS = [
+        'helper', 'util', 'utils', 'format', 'parse', 'convert', 'transform',
+        'validate', 'sanitize', 'normalize', 'escape', 'unescape', 'encode',
+        'decode', 'serialize', 'deserialize', 'to_', 'from_', 'is_', 'has_',
+        'get_', 'set_', 'make_', 'create_', 'build_'
+    ]
+    
+    def __init__(self, function_usage_map: Dict[str, int] = None):
+        """
+        Initialize risk scorer.
+        
+        Args:
+            function_usage_map: Dictionary mapping function names to usage counts
+                              across files. If None, assumes single-file analysis.
+        """
+        self.function_usage_map = function_usage_map or {}
+    
+    def score_function(self, function_info: Dict[str, Any], 
+                      imports: List[Dict[str, Any]],
+                      api_calls: Set[str] = None) -> Dict[str, str]:
+        """
+        Score a function's risk level based on deterministic rules.
+        
+        Args:
+            function_info: Dictionary with function metadata (name, calls, etc.)
+            imports: List of import statements from the file
+            api_calls: Set of API-related calls found in the function
+            
+        Returns:
+            Dictionary with 'risk_level' and 'risk_reason'
+        """
+        function_name = function_info.get('name', '')
+        function_calls = function_info.get('function_calls', [])
+        api_calls = api_calls or set()
+        
+        # Check for external API calls (HIGH risk)
+        if self._has_external_api_calls(imports, api_calls, function_calls):
+            return {
+                "risk_level": "HIGH",
+                "risk_reason": "Function makes external API calls"
+            }
+        
+        # Check if function is used in multiple files (HIGH risk)
+        usage_count = self.function_usage_map.get(function_name, 1)
+        if usage_count > 1:
+            return {
+                "risk_level": "HIGH",
+                "risk_reason": f"Function used in {usage_count} files"
+            }
+        
+        # Check if function is a utility/helper function (LOW risk)
+        if self._is_helper_function(function_name):
+            return {
+                "risk_level": "LOW",
+                "risk_reason": "Utility/helper function"
+            }
+        
+        # Default: MEDIUM risk (core logic, used once, no external calls)
+        return {
+            "risk_level": "MEDIUM",
+            "risk_reason": "Core logic function, used once, no external API calls"
+        }
+    
+    def _has_external_api_calls(self, imports: List[Dict[str, Any]], 
+                               api_calls: Set[str],
+                               function_calls: List[str]) -> bool:
+        """
+        Determines if the function makes external API calls.
+        
+        Checks if the function actually uses API calls by:
+        1. Checking if API modules are called directly (e.g., requests.get)
+        2. Checking if imported API modules are used in function calls
+        """
+        # Build set of imported API module names and aliases
+        imported_api_modules = set()
+        for imp in imports:
+            if imp['type'] == 'import':
+                module_name = imp['module']
+                alias = imp.get('alias')
+                # Check if this is an API module
+                if self._is_api_module(module_name):
+                    imported_api_modules.add(alias if alias else module_name)
+            elif imp['type'] == 'from_import':
+                module_name = imp['module']
+                if self._is_api_module(module_name):
+                    # For from-import, check if any imported items are used
+                    for item in imp.get('imports', []):
+                        imported_name = item.get('alias') or item.get('name')
+                        if imported_name in self.API_FUNCTION_NAMES:
+                            return True
+                    # Also track the module itself
+                    imported_api_modules.add(module_name)
+        
+        # Check API calls that use API modules (e.g., requests.get, urllib.request.urlopen)
+        for api_call in api_calls:
+            # Extract module part from API call (e.g., "requests" from "requests.get")
+            if '.' in api_call:
+                module_part = api_call.split('.')[0]
+                # Check if this module is an API module
+                if module_part in self.API_MODULES or module_part in imported_api_modules:
+                    return True
+                # Check for partial matches (e.g., 'urllib.request' matches 'urllib')
+                for api_module in self.API_MODULES:
+                    if module_part.startswith(api_module.split('.')[0]) or api_module.startswith(module_part):
+                        return True
+        
+        # Check if function calls use imported API modules
+        for call in function_calls:
+            # Check if any imported API module name appears in calls
+            # This handles cases like: requests.get() where 'requests' is imported
+            for api_module in imported_api_modules:
+                if call.startswith(api_module) or api_module in call:
+                    return True
+        
+        return False
+    
+    def _is_api_module(self, module_name: str) -> bool:
+        """Check if a module name is an API-related module."""
+        # Direct match
+        if module_name in self.API_MODULES:
+            return True
+        # Check if module starts with any API module name
+        for api_module in self.API_MODULES:
+            base_module = api_module.split('.')[0]
+            if module_name == base_module or module_name.startswith(base_module + '.'):
+                return True
+        return False
+    
+    def _is_helper_function(self, function_name: str) -> bool:
+        """
+        Determines if a function is a utility/helper function based on naming patterns.
+        """
+        function_name_lower = function_name.lower()
+        return any(pattern in function_name_lower for pattern in self.HELPER_PATTERNS)
+
+
+class FunctionCallCollector(ast.NodeVisitor):
+    """
+    Helper visitor to collect function calls within a function body.
+    Extracts the names of functions being called and tracks API-related calls.
+    """
+    
+    def __init__(self):
+        self.calls: List[str] = []
+        self.api_calls: Set[str] = set()  # Track API-related function calls
+    
+    def visit_Call(self, node: ast.Call):
+        """Extracts function call names and detects API calls."""
+        if isinstance(node.func, ast.Name):
+            # Direct function call: function_name()
+            self.calls.append(node.func.id)
+        elif isinstance(node.func, ast.Attribute):
+            # Method call: obj.method_name()
+            # We store just the method name for simplicity
+            self.calls.append(node.func.attr)
+            # Check if this is an API call (e.g., requests.get, urllib.request.urlopen)
+            if isinstance(node.func.value, ast.Name):
+                # Track the module name for API detection
+                self.api_calls.add(f"{node.func.value.id}.{node.func.attr}")
+            elif isinstance(node.func.value, ast.Attribute):
+                # Handle nested attributes (e.g., urllib.request.urlopen)
+                attr_name = self._get_attribute_name(node.func.value)
+                if attr_name:
+                    self.api_calls.add(f"{attr_name}.{node.func.attr}")
+        elif isinstance(node.func, ast.Call):
+            # Chained call: func()()
+            pass  # Skip complex chained calls for MVP
+        
+        self.generic_visit(node)
+    
+    def _get_attribute_name(self, node: ast.Attribute) -> str:
+        """Helper to extract full attribute name from nested attributes."""
+        if isinstance(node.value, ast.Name):
+            return f"{node.value.id}.{node.attr}"
+        elif isinstance(node.value, ast.Attribute):
+            parent = self._get_attribute_name(node.value)
+            return f"{parent}.{node.attr}" if parent else None
+        return None
+
+
+def analyze_python_file(file_path: str) -> Dict[str, Any]:
+    """
+    Convenience function to analyze a Python file.
+    
+    Args:
+        file_path: Path to the .py file
+        
+    Returns:
+        Dictionary with analysis results
+    """
+    analyzer = PythonStaticAnalyzer()
+    return analyzer.analyze_file(file_path)
+
+
+if __name__ == "__main__":
+    # Example usage
+    import sys
+    
+    if len(sys.argv) > 1:
+        file_path = sys.argv[1]
+        analyzer = PythonStaticAnalyzer()
+        result = analyzer.analyze_file(file_path)
+        print(analyzer.analyze_file_to_json(file_path))
+    else:
+        print("Usage: python analyzer.py <path_to_python_file>")
