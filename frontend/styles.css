@@ -21,3 +21,25 @@ h1 {
   text-align: center;
   margin-bottom: 40px;
 }
+
+/* Upload Area */
+.upload-zone {
+  background: var(--card);
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 60px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 30px;
+}
+.upload-zone:hover,
+.upload-zone.dragover {
+  border-color: var(--primary);
+  background: #eef2ff;
+}
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+  display: block;
+}
