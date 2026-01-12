@@ -123,3 +123,7 @@ async def explain_function(
             os.remove(temp_path)
         raise HTTPException(status_code=500, detail=str(e))
 
+if __name__ == "__main__":
+    import uvicorn
+    # Run the server
+    uvicorn.run(app, host="0.0.0.0", port=8000)
