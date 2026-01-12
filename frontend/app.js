@@ -61,3 +61,40 @@ async function handleFileUpload(file) {
     functionsList.innerHTML = `<p style="color:red; text-align:center;">Error: ${error.message}</p>`;
   }
 }
+
+// --- Render UI ---
+function renderResults(data) {
+  functionsList.innerHTML = "";
+
+  if (data.functions.length === 0) {
+    functionsList.innerHTML = "<p>No functions found in this file.</p>";
+    return;
+  }
+
+  data.functions.forEach((func) => {
+    const riskLevel = func.risk_score.risk_level;
+
+    const div = document.createElement("div");
+    div.className = "function-item";
+    // Note: onclick now calls window.getExplanation because modules have different scopes
+    div.innerHTML = `
+            <div class="func-header">
+                <div>
+                    <span class="func-name">${func.name}()</span>
+                    <br><small style="color:#666">Line: ${func.line_number} | Params: ${func.parameter_count}</small>
+                </div>
+                <div style="text-align:right">
+                    <span class="risk-badge risk-${riskLevel}">${riskLevel} Risk</span>
+                </div>
+            </div>
+            <p style="margin: 5px 0 15px 0; color: #4b5563;">
+                <em>Reason: ${func.risk_score.risk_reason}</em>
+            </p>
+            <button class="btn-explain" onclick="getExplanation('${func.name}', this)">
+                Ask Gemini to Explain
+            </button>
+            <div class="explanation-box" id="explain-${func.name}"></div>
+        `;
+    functionsList.appendChild(div);
+  });
+}
