@@ -78,3 +78,64 @@ h1 {
   font-family: monospace;
   color: var(--primary);
 }
+
+.risk-badge {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+}
+.risk-HIGH {
+  background-color: var(--risk-high);
+}
+.risk-MEDIUM {
+  background-color: var(--risk-med);
+}
+.risk-LOW {
+  background-color: var(--risk-low);
+}
+
+.btn-explain {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: opacity 0.2s;
+}
+.btn-explain:hover {
+  opacity: 0.9;
+}
+.btn-explain:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.explanation-box {
+  background-color: #f8fafc;
+  border-left: 4px solid var(--primary);
+  padding: 16px;
+  margin-top: 15px;
+  border-radius: 0 6px 6px 0;
+  display: none; /* Hidden by default */
+  line-height: 1.6;
+}
+
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
