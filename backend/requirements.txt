@@ -1,3 +1,4 @@
-# ExplainIt Static Analysis Module
-# Uses only Python standard library (no external dependencies)
-# Requires Python 3.9+ (uses ast.unparse)
+fastapi
+uvicorn
+python-multipart
+google-generativeai
