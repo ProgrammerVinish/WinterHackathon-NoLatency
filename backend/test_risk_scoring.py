@@ -136,3 +136,12 @@ def shared_function():
     for f in ["file1.py", "file2.py"]:
         if os.path.exists(f):
             os.remove(f)
+
+if __name__ == "__main__":
+    test_api_call_detection()
+    test_helper_function()
+    test_core_logic()
+    test_multi_file_usage()
+    print("\n" + "=" * 60)
+    print("All risk scoring tests completed!")
+    print("=" * 60)
