@@ -40,5 +40,40 @@
         <div id="file-tree" class="file-tree">
           <div class="empty-state-small">No file loaded</div>
         </div>
+        
+       </aside>
+          <main class="code-viewer card">
+        <div class="panel-header">
+          <span id="file-name-display">Preview</span>
+          <span class="tag-read-only">Read-only</span>
+        </div>
+        <div class="code-container">
+          <pre><code id="code-content" class="language-python"># Upload a file to view code...</code></pre>
+        </div>
+      </main>
+
+      <aside class="sidebar-right card">
+        <div class="panel-header">
+          EXPLAINIT ANALYSIS
+          <span id="global-risk-badge" class="badge hidden">RISK</span>
+        </div>
+
+        <div class="scroll-area">
+          <div id="analysis-content">
+            <div class="empty-state">Upload a file to analyze risks.</div>
+          </div>
+
+          <div id="gemini-panel" class="gemini-box hidden">
+            <h3>Gemini Insight</h3>
+            <div id="gemini-content"></div>
+            <button id="btn-ask-gemini" class="btn-secondary">
+              Explain Function
+            </button>
+          </div>
+        </div>
       </aside>
+    </div>
+  </body>
+</html>
+
   
