@@ -133,7 +133,7 @@ class CodeAnalyzerVisitor(ast.NodeVisitor):
             self._check_local_dependency(module_name)
         
         self.generic_visit(node)
-        
+
     def visit_ImportFrom(self, node: ast.ImportFrom):
         """Extracts from-import statements (e.g., 'from os import path')."""
         module_name = node.module if node.module else ""
@@ -207,3 +207,54 @@ class CodeAnalyzerVisitor(ast.NodeVisitor):
         
         self.functions.append(function_info)
         self.generic_visit(node)
+
+class FunctionCallCollector(ast.NodeVisitor):
+    """
+    Helper visitor to collect function calls within a function body.
+    Extracts the names of functions being called.
+    """
+    
+    def __init__(self):
+        self.calls: List[str] = []
+    
+    def visit_Call(self, node: ast.Call):
+        """Extracts function call names."""
+        if isinstance(node.func, ast.Name):
+            # Direct function call: function_name()
+            self.calls.append(node.func.id)
+        elif isinstance(node.func, ast.Attribute):
+            # Method call: obj.method_name()
+            # We store just the method name for simplicity
+            self.calls.append(node.func.attr)
+        elif isinstance(node.func, ast.Call):
+            # Chained call: func()()
+            pass  # Skip complex chained calls for MVP
+        
+        self.generic_visit(node)
+
+
+def analyze_python_file(file_path: str) -> Dict[str, Any]:
+    """
+    Convenience function to analyze a Python file.
+    
+    Args:
+        file_path: Path to the .py file
+        
+    Returns:
+        Dictionary with analysis results
+    """
+    analyzer = PythonStaticAnalyzer()
+    return analyzer.analyze_file(file_path)
+
+
+if __name__ == "__main__":
+    # Example usage
+    import sys
+    
+    if len(sys.argv) > 1:
+        file_path = sys.argv[1]
+        analyzer = PythonStaticAnalyzer()
+        result = analyzer.analyze_file(file_path)
+        print(analyzer.analyze_file_to_json(file_path))
+    else:
+        print("Usage: python analyzer.py <path_to_python_file>")
