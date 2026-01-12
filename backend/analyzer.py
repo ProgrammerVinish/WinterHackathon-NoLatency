@@ -68,3 +68,69 @@ class PythonStaticAnalyzer:
         }
         
         return result
+    def analyze_file_to_json(self, file_path: str, indent: int = 2) -> str:
+        """
+        Analyzes a file and returns the result as a JSON string.
+        
+        Args:
+            file_path: Path to the .py file to analyze
+            indent: JSON indentation level
+            
+        Returns:
+            JSON string representation of the analysis
+        """
+        result = self.analyze_file(file_path)
+        return json.dumps(result, indent=indent)
+
+
+class CodeAnalyzerVisitor(ast.NodeVisitor):
+    """
+    AST Visitor that extracts metadata from Python code.
+    Visits nodes in the AST tree and collects information.
+    """
+    
+    def __init__(self, imports: List[Dict], functions: List[Dict], 
+                 dependencies: Set[str], file_dir: Path):
+        self.imports = imports
+        self.functions = functions
+        self.file_dependencies = dependencies
+        self.file_dir = file_dir
+        self.current_function = None
+    
+    def visit_Import(self, node: ast.Import):
+        """Extracts standard import statements (e.g., 'import os')."""
+        for alias in node.names:
+            import_info = {
+                "type": "import",
+                "module": alias.name,
+                "alias": alias.asname if alias.asname else None
+            }
+            self.imports.append(import_info)
+            # Check if this might be a local file dependency
+            self._check_local_dependency(alias.name)
+        self.generic_visit(node)
+    
+    def visit_ImportFrom(self, node: ast.ImportFrom):
+        """Extracts from-import statements (e.g., 'from os import path')."""
+        module_name = node.module if node.module else ""
+        imports_list = []
+        
+        for alias in node.names:
+            import_item = {
+                "name": alias.name,
+                "alias": alias.asname if alias.asname else None
+            }
+            imports_list.append(import_item)
+        
+        import_info = {
+            "type": "from_import",
+            "module": module_name,
+            "imports": imports_list
+        }
+        self.imports.append(import_info)
+        # Check if this might be a local file dependency
+        if module_name:
+            self._check_local_dependency(module_name)
+        
+        self.generic_visit(node)
+    
