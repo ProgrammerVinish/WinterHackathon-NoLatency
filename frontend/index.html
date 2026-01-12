@@ -3,7 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>ExplainIt - Code Risk Analyzer</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
   </head>
-  <body></body>
+  <body>
+    <h1>ExplainIt 🧠</h1>
+
+    <div class="upload-zone" id="drop-zone">
+      <span class="upload-icon">📂</span>
+      <h3>Drag & Drop your Python file here</h3>
+      <p>or click to browse</p>
+      <input type="file" id="file-input" accept=".py" style="display: none" />
+    </div>
+
+    <div id="results-area">
+      <h2 id="file-name-title">Analysis Results</h2>
+      <div class="card" id="functions-list"></div>
+    </div>
+  </body>
 </html>
