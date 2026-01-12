@@ -372,23 +372,16 @@ class RiskScorer:
                     # Also track the module itself
                     imported_api_modules.add(module_name)
         
-        # Check API calls that use API modules (e.g., requests.get, urllib.request.urlopen)
         for api_call in api_calls:
-            # Extract module part from API call (e.g., "requests" from "requests.get")
             if '.' in api_call:
                 module_part = api_call.split('.')[0]
-                # Check if this module is an API module
                 if module_part in self.API_MODULES or module_part in imported_api_modules:
                     return True
-                # Check for partial matches (e.g., 'urllib.request' matches 'urllib')
                 for api_module in self.API_MODULES:
                     if module_part.startswith(api_module.split('.')[0]) or api_module.startswith(module_part):
                         return True
         
-        # Check if function calls use imported API modules
         for call in function_calls:
-            # Check if any imported API module name appears in calls
-            # This handles cases like: requests.get() where 'requests' is imported
             for api_module in imported_api_modules:
                 if call.startswith(api_module) or api_module in call:
                     return True
