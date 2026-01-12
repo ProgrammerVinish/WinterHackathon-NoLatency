@@ -48,7 +48,7 @@ class GeminiExplainer:
         
         # Configure Gemini
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
     
     def explain_function(self, function_metadata: Dict[str, Any], 
                         file_context: Dict[str, Any] = None) -> str:
@@ -135,49 +135,33 @@ class GeminiExplainer:
     
     def _create_explanation_prompt(self, metadata_json: Dict[str, Any]) -> str:
         """
-        Create prompt for Gemini that asks for explanation only.
-        Explicitly prohibits code generation or refactoring suggestions.
-        
-        Args:
-            metadata_json: Structured metadata dictionary
-            
-        Returns:
-            Formatted prompt string
+        Create prompt for Gemini that asks for extremely concise Markdown.
         """
-        # Convert metadata to JSON string for the prompt
         metadata_str = json.dumps(metadata_json, indent=2)
         
-        prompt = f"""You are analyzing a Python function based on its structured metadata. 
-You will receive ONLY metadata (function name, parameters, calls, risk score) - NO raw source code.
+        prompt = f"""You are a code analysis expert. Analyze this function metadata.
+You will receive ONLY metadata - NO raw source code.
 
 Function Metadata:
 {metadata_str}
 
-Please provide a clear, concise explanation in plain text that addresses:
+Please provide a **Brief, High-Level Summary** in Markdown.
+**Constraint:** Be extremely concise. No fluff. No long paragraphs. Use short bullet points.
 
-1. **Why this function exists**: What is its purpose and role in the codebase?
-   - Based on the function name, parameters, and what it calls
-   - Consider the imports and dependencies as context
+Structure exactly like this:
 
-2. **What might break if changed**: What are the potential impacts of modifying this function?
-   - Consider the risk level and why it was assigned
-   - Think about what other code might depend on this function
-   - Consider the function calls it makes and parameters it accepts
+### 🎯 Goal
+* (1 short sentence on what the function does)
 
-3. **Why the risk level is assigned**: Explain the risk assessment reasoning
-   - Risk level: {metadata_json.get('risk_score', {}).get('risk_level', 'UNKNOWN')}
-   - Risk reason: {metadata_json.get('risk_score', {}).get('risk_reason', 'Not provided')}
-   - Explain what factors contribute to this risk level
+### ⚠️ Risk
+* **Level:** {metadata_json.get('risk_score', {}).get('risk_level', 'UNKNOWN')}
+* **Reason:** (1 short sentence explaining why)
 
-IMPORTANT CONSTRAINTS:
-- Provide explanation ONLY - do NOT generate code
-- Do NOT suggest refactoring or code changes
-- Do NOT provide code examples
-- Focus on understanding and explanation
-- Write in clear, natural language
+### 🔗 Context
+* **Input:** (List key parameters briefly)
+* **External:** (List key API calls or dependencies, if any)
 
-Your explanation:"""
-        
+"""
         return prompt
 
 
