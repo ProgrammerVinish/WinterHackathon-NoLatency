@@ -68,6 +68,7 @@ class PythonStaticAnalyzer:
         }
         
         return result
+    
     def analyze_file_to_json(self, file_path: str, indent: int = 2) -> str:
         """
         Analyzes a file and returns the result as a JSON string.
@@ -110,30 +111,6 @@ class CodeAnalyzerVisitor(ast.NodeVisitor):
             self._check_local_dependency(alias.name)
         self.generic_visit(node)
     
-    def visit_ImportFrom(self, node: ast.ImportFrom):
-        """Extracts from-import statements (e.g., 'from os import path')."""
-        module_name = node.module if node.module else ""
-        imports_list = []
-        
-        for alias in node.names:
-            import_item = {
-                "name": alias.name,
-                "alias": alias.asname if alias.asname else None
-            }
-            imports_list.append(import_item)
-        
-        import_info = {
-            "type": "from_import",
-            "module": module_name,
-            "imports": imports_list
-        }
-        self.imports.append(import_info)
-        # Check if this might be a local file dependency
-        if module_name:
-            self._check_local_dependency(module_name)
-        
-        self.generic_visit(node)
-
     def visit_ImportFrom(self, node: ast.ImportFrom):
         """Extracts from-import statements (e.g., 'from os import path')."""
         module_name = node.module if node.module else ""
@@ -207,6 +184,7 @@ class CodeAnalyzerVisitor(ast.NodeVisitor):
         
         self.functions.append(function_info)
         self.generic_visit(node)
+
 
 class FunctionCallCollector(ast.NodeVisitor):
     """
