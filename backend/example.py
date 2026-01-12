@@ -45,3 +45,17 @@ def main():
     numbers = [1, 2, 3, 4, 5]
     total = calculate_sum(numbers)
     print(f"Sum: {total}")
+
+class DataProcessor:
+    """A simple class for demonstration."""
+    
+    def __init__(self):
+        self.data = []
+    
+    def add_item(self, item: str):
+        """Add an item to the processor."""
+        self.data.append(item)
+
+
+if __name__ == "__main__":
+    main()
