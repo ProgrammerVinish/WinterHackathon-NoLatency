@@ -95,3 +95,61 @@ function selectFunction(element, funcData) {
 
   // Show Gemini Panel
   geminiPanel.classList.remove("hidden");
+  
+  // Check Cache
+  if (functionCache[funcData.name]) {
+    geminiContent.innerHTML = marked.parse(functionCache[funcData.name]);
+    btnAsk.innerText = "Explain Again";
+  } else {
+    geminiContent.innerHTML =
+      "Click the button to generate an AI explanation for this function.";
+    btnAsk.innerText = "Explain Function";
+  }
+}
+
+async function fetchExplanation() {
+  if (!currentFile || !currentSelection) return;
+
+  btnAsk.innerText = "Thinking...";
+  geminiContent.innerHTML =
+    '<div class="empty-state">Gemini is analyzing...</div>';
+
+  const formData = new FormData();
+  formData.append("file", currentFile);
+
+  try {
+    const response = await fetch(
+      `http://localhost:8000/explain?function_name=${currentSelection.name}`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await response.json();
+    functionCache[currentSelection.name] = data.explanation;
+
+    // 1. Convert Markdown to HTML
+    let htmlContent = marked.parse(data.explanation);
+
+    // 2. Wrap H3 sections in "card" divs (The Magic Step)
+    // This regex finds <h3>...</h3> and wraps it and following content in <div class="expl-card">
+    htmlContent = htmlContent.replace(
+      /<h3>/g,
+      '</div><div class="expl-card"><h3>'
+    );
+    htmlContent = htmlContent.replace(/^<\/div>/, ""); // Remove the first empty closing div
+    htmlContent += "</div>"; // Close the last div
+    htmlContent = htmlContent.replace(
+      /(HIGH|MEDIUM|LOW)/g,
+      '<span class="risk-text $1">$1</span>'
+    );
+    geminiContent.innerHTML = htmlContent;
+    btnAsk.innerText = "Explain Again";
+  } catch (error) {
+    console.error(error);
+    geminiContent.innerHTML =
+      '<div class="empty-state">Error fetching explanation.</div>';
+    btnAsk.innerText = "Try Again";
+  }
+}
