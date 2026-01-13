@@ -53,21 +53,25 @@ ExplainIt addresses this problem by performing static analysis to extract struct
 ### Backend Setup
 
 1. Navigate to the backend directory:
+
    ```bash
    cd backend
    ```
 
 2. Install Python dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 3. Create a `.env` file in the backend directory:
+
    ```bash
    GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
 4. Start the FastAPI server:
+
    ```bash
    python server.py
    ```
@@ -77,11 +81,13 @@ ExplainIt addresses this problem by performing static analysis to extract struct
 ### Frontend Setup
 
 1. Navigate to the frontend directory:
+
    ```bash
    cd frontend
    ```
 
 2. Open `index.html` in a web browser, or use a local web server:
+
    ```bash
    # Using Python's built-in server
    python -m http.server 8080
@@ -103,7 +109,7 @@ ExplainIt addresses this problem by performing static analysis to extract struct
 
 ## Team Members
 
-- Vinish
-- Veol Steve Jose
-- Vaishali Kolpe
-- Sanjothomas V S
+- Vinish (Backend)
+- Veol Steve Jose (Backend)
+- Vaishali Kolpe (Frontend)
+- Sanjothomas V S (Frontend and Testing)
