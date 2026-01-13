@@ -1,0 +1,15 @@
+backend/__pycache__/analyzer.cpython-312.pyc
+backend/__pycache__/analyzer.cpython-314.pyc
+backend/test_core.py
+backend/test_helper.py
+# Python cache files
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+env/
+
+# Environment variables (Safety first!)
+.env
+.DS_Store
