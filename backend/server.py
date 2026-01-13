@@ -18,13 +18,15 @@ app = FastAPI(title="ExplainIt Backend")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://ephemeral-lamington-8919cc.netlify.app",
         "https://explainit-ui.netlify.app",
         "https://dainty-zuccutto-601df8.netlify.app",
     ],
-    allow_credentials=True,
+    allow_credentials=False,   # IMPORTANT
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 def cleanup_file(path: str):
     """Background task to remove temporary file after request completes."""
