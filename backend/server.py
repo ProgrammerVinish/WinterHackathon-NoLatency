@@ -17,7 +17,10 @@ app = FastAPI(title="ExplainIt Backend")
 # Enable CORS (allows your frontend to talk to this backend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your frontend URL
+    allow_origins=[
+        "https://explainit-ui.netlify.app",
+        "https://dainty-zuccutto-601df8.netlify.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
