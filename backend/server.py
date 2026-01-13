@@ -128,6 +128,7 @@ async def explain_function(
 if __name__ == "__main__":
     import uvicorn
     # Run the server
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 #http://localhost:8000/docs
