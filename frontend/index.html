@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ExplainIt - Code Dashboard</title>
+
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-ghcolors.min.css"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script src="app.js" defer></script>
+  </head>
+   <body>
+    <header class="top-bar">
+      <div class="logo">
+        <span class="logo-icon">EX</span>
+        <div class="logo-text">
+          <h1>ExplainIt</h1>
+          <p>Read-only Code Risk Insights</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="upload-btn" class="btn-primary">
+          <span class="icon">⬆</span> Upload File
+        </button>
+        <input type="file" id="file-input" accept=".py" hidden />
+      </div>
+    </header>
+
+    <div class="dashboard-grid">
+      <aside class="sidebar-left card">
+        <div class="panel-header">FILES</div>
+        <div id="file-tree" class="file-tree">
+          <div class="empty-state-small">No file loaded</div>
+        </div>
+        
+       </aside>
+          <main class="code-viewer card">
+        <div class="panel-header">
+          <span id="file-name-display">Preview</span>
+          <span class="tag-read-only">Read-only</span>
+        </div>
+        <div class="code-container">
+          <pre><code id="code-content" class="language-python"># Upload a file to view code...</code></pre>
+        </div>
+      </main>
+
+      <aside class="sidebar-right card">
+        <div class="panel-header">
+          EXPLAINIT ANALYSIS
+          <span id="global-risk-badge" class="badge hidden">RISK</span>
+        </div>
+
+        <div class="scroll-area">
+          <div id="analysis-content">
+            <div class="empty-state">Upload a file to analyze risks.</div>
+          </div>
+
+          <div id="gemini-panel" class="gemini-box hidden">
+            <h3>Gemini Insight</h3>
+            <div id="gemini-content"></div>
+            <button id="btn-ask-gemini" class="btn-secondary">
+              Explain Function
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>
+
+  

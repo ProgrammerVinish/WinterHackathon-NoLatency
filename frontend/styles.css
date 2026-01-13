@@ -1,0 +1,462 @@
+:root {
+  /* --- "The Photo" Light Theme --- */
+  --bg-color: #f9fafb;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+
+  --text-main: #111827;
+  --text-muted: #6b7280;
+
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --logo-bg: #10b981;
+  --logo-text: #ffffff;
+
+  --risk-high-bg: #fef2f2;
+  --risk-high-text: #dc2626;
+  --risk-med-bg: #fffbeb;
+  --risk-med-text: #d97706;
+  --risk-low-bg: #ecfdf5;
+  --risk-low-text: #059669;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevents whole page scroll */
+}
+
+/* --- Top Bar --- */
+.top-bar {
+  height: 64px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0; /* Important: prevents header from squishing */
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo-icon {
+  background: var(--logo-bg);
+  color: var(--logo-text);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.logo-text h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.logo-text p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* --- Main Dashboard Grid --- */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 450px;
+  /* FIX 1: Ensure exact height calculation to force inner scrolling */
+  height: calc(100vh - 64px);
+  background-color: var(--bg-color);
+  gap: 1px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* --- Common Panel Styles --- */
+.card {
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  /* FIX 2: Restrict panel height so children overflow correctly */
+  height: 100%;
+  min-height: 0;
+}
+
+.panel-header {
+  height: 50px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0; /* Keep header fixed size */
+}
+
+/* --- LEFT: File Explorer --- */
+.sidebar-left {
+  border-right: 1px solid var(--border-color);
+}
+/* FIX 3a: Enable scroll for file list */
+.file-tree {
+  padding: 15px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.file-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.1s;
+}
+.file-item:hover {
+  background: #f3f4f6;
+  color: var(--text-main);
+}
+.file-item.active {
+  background: #ecfdf5;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* --- MIDDLE: Code Viewer --- */
+.code-viewer {
+  position: relative;
+}
+.tag-read-only {
+  background: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+/* FIX 3b: Enable scroll for code area */
+.code-container {
+  flex: 1;
+  overflow: auto; /* Enable scrolling */
+  padding: 24px;
+  font-family: "SF Mono", "Roboto Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  background: #ffffff;
+}
+
+/* --- RIGHT: Analysis Panel --- */
+.sidebar-right {
+  border-left: 1px solid var(--border-color);
+  background: #fafafa;
+}
+/* FIX 3c: Enable scroll for analysis area */
+.scroll-area {
+  overflow-y: auto;
+  flex: 1;
+  padding: 20px;
+}
+
+.func-item {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.func-item:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1);
+}
+.func-item.selected {
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.func-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  align-items: center;
+}
+.func-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+.func-reason {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.HIGH {
+  background: var(--risk-high-bg);
+  color: var(--risk-high-text);
+  border: 1px solid #fee2e2;
+}
+.MEDIUM {
+  background: var(--risk-med-bg);
+  color: var(--risk-med-text);
+  border: 1px solid #fef3c7;
+}
+.LOW {
+  background: var(--risk-low-bg);
+  color: var(--risk-low-text);
+  border: 1px solid #d1fae5;
+}
+
+.gemini-box {
+  margin-top: 24px;
+  padding: 20px;
+  background: white;
+  border: 1px solid #d1fae5;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+.gemini-box h3 {
+  color: var(--primary);
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.gemini-content {
+  font-size: 0.95rem;
+  color: #374151;
+  line-height: 1.7;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px;
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  border-color: var(--text-muted);
+  background: #f9fafb;
+}
+
+.hidden {
+  display: none;
+}
+.empty-state {
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 60px;
+  font-style: italic;
+}
+
+code[class*="language-"],
+pre[class*="language-"] {
+  background: white !important;
+  text-shadow: none !important;
+  font-family: "SF Mono", monospace !important;
+}
+/* --- GEMINI OUTPUT STYLING (The "Sectioned" Look) --- */
+
+/* Reset the box container */
+.gemini-box {
+  padding: 0; /* Remove padding from main box */
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* This targets the content generated by marked.js */
+#gemini-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Space between cards */
+  padding: 4px; /* Room for shadows */
+}
+
+/* Turn Headers into Section Titles */
+#gemini-content h3 {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 8px 4px; /* Slight indent */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Turn Lists into White Cards */
+#gemini-content ul {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 16px 12px 30px; /* Space for bullet points */
+  margin: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s;
+}
+
+/* Hover effect on sections */
+#gemini-content ul:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+
+/* List Items text styling */
+#gemini-content li {
+  font-size: 0.9rem;
+  color: var(--text-main);
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+#gemini-content li:last-child {
+  margin-bottom: 0;
+}
+
+/* Bold text styling */
+#gemini-content strong {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+/* Remove default Gemini box header since we have new sections */
+.gemini-box > h3 {
+  display: none;
+}
+.expl-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px; /* Smooth corners */
+  padding: 16px 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+  transition: transform 0.2s;
+}
+
+.expl-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+/* Headers (Blue/Slate color) */
+.expl-card h3 {
+  font-size: 1rem;
+  color: #1e293b; /* Slate 800 */
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f1f5f9; /* Subtle divider line */
+}
+
+/* Paragraph Text */
+.expl-card p {
+  font-size: 0.95rem;
+  color: #475569; /* Slate 600 */
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Bullet Points (Custom Orange/Gold dots) */
+.expl-card ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.expl-card li {
+  font-size: 0.95rem;
+  color: #475569;
+  margin-bottom: 6px;
+  /* Custom colored bullet trick */
+  list-style-type: none;
+  position: relative;
+}
+
+.expl-card li::before {
+  content: "•";
+  color: #f59e0b; /* Amber 500 (The orange/yellow dot) */
+  font-weight: bold;
+  font-size: 1.2em;
+  position: absolute;
+  left: -15px;
+  top: -2px;
+}
+/* --- Specific Styling for "Risk Level" Card --- */
+/* We target the card containing the word "Risk" in the header using :has() or JS, 
+   but for simplicity, we style the text based on content match if possible. 
+   Since CSS can't read text, we use the header content we know exists. */
+
+/* Styling the Risk Header Text specifically */
+.expl-card h3:contains("Risk Level") {
+  /* Note: :contains is not standard CSS. We rely on the generic style above usually. */
+  /* To strictly match the red text in your image: */
+}
+
+/* Let's make the Risk Level Header RED using a CSS Attribute selector if possible, 
+   or just style the text inside. 
+   Since Gemini sends "Risk Level: HIGH", we can style bold text inside headers. */
+.risk-text.HIGH {
+  color: #dc2626;
+  font-weight: 800;
+}
+.risk-text.MEDIUM {
+  color: #d97706;
+  font-weight: 800;
+}
+.risk-text.LOW {
+  color: #059669;
+  font-weight: 800;
+}
