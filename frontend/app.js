@@ -8,6 +8,7 @@ const analysisContent = document.getElementById("analysis-content");
 const geminiPanel = document.getElementById("gemini-panel");
 const geminiContent = document.getElementById("gemini-content");
 const btnAsk = document.getElementById("btn-ask-gemini");
+const API_BASE_URL = "https://winterhackathon-nolatency.onrender.com";
 
 let currentFile = null;
 let currentSelection = null;
@@ -37,7 +38,7 @@ async function handleFileUpload(file) {
   formData.append("file", file);
 
   try {
-    const response = await fetch("http://localhost:8000/analyze", {
+    const response = await fetch(`${API_BASE_URL}/analyze`, {
       method: "POST",
       body: formData,
     });
@@ -109,6 +110,8 @@ function selectFunction(element, funcData) {
 
 async function fetchExplanation() {
   if (!currentFile || !currentSelection) return;
+  btnAsk.disabled = true;
+
 
   btnAsk.innerText = "Thinking...";
   geminiContent.innerHTML =
@@ -118,9 +121,7 @@ async function fetchExplanation() {
   formData.append("file", currentFile);
 
   try {
-    const response = await fetch(
-      `http://localhost:8000/explain?function_name=${currentSelection.name}`,
-      {
+    const response = await fetch(`${API_BASE_URL}/explain?function_name=${currentSelection.name}`, {
         method: "POST",
         body: formData,
       }
@@ -152,4 +153,5 @@ async function fetchExplanation() {
       '<div class="empty-state">Error fetching explanation.</div>';
     btnAsk.innerText = "Try Again";
   }
+  btnAsk.disabled = false;
 }
